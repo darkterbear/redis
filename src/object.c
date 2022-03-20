@@ -53,6 +53,12 @@ robj *createObject(int type, void *ptr) {
     } else {
         o->lru = LRU_CLOCK();
     }
+
+    if (server.maxmemory_policy == MAXMEMORY_MIN_FSL) {
+        o->min_fsl = MINFSLInitialScore();
+        o->min_fsl_l = MINFSLInitialL();
+    }
+
     return o;
 }
 
@@ -94,6 +100,11 @@ robj *createEmbeddedStringObject(const char *ptr, size_t len) {
         o->lru = (LFUGetTimeInMinutes()<<8) | LFU_INIT_VAL;
     } else {
         o->lru = LRU_CLOCK();
+    }
+
+    if (server.maxmemory_policy == MAXMEMORY_MIN_FSL) {
+        o->min_fsl = MINFSLInitialScore();
+        o->min_fsl_l = MINFSLInitialL();
     }
 
     sh->len = len;

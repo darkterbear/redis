@@ -530,7 +530,7 @@ typedef enum {
 #define MAXMEMORY_ALLKEYS_LFU ((5<<8)|MAXMEMORY_FLAG_LFU|MAXMEMORY_FLAG_ALLKEYS)
 #define MAXMEMORY_ALLKEYS_RANDOM ((6<<8)|MAXMEMORY_FLAG_ALLKEYS)
 #define MAXMEMORY_NO_EVICTION (7<<8)
-#define MAXMEMORY_MIN_FSL (8<<8)
+#define MAXMEMORY_MIN_FSL ((8<<8)|MAXMEMORY_FLAG_LFU)
 
 /* Units */
 #define UNIT_SECONDS 0
@@ -841,6 +841,8 @@ typedef struct RedisModuleDigest {
 #define LRU_CLOCK_MAX ((1<<LRU_BITS)-1) /* Max value of obj->lru */
 #define LRU_CLOCK_RESOLUTION 1000 /* LRU clock resolution in ms */
 
+#define MIN_FSL_L_BITS 16
+
 #define OBJ_SHARED_REFCOUNT INT_MAX     /* Global object never destroyed. */
 #define OBJ_STATIC_REFCOUNT (INT_MAX-1) /* Object allocated in the stack. */
 #define OBJ_FIRST_SPECIAL_REFCOUNT OBJ_STATIC_REFCOUNT
@@ -848,8 +850,12 @@ typedef struct redisObject {
     unsigned type:4;
     unsigned encoding:4;
     unsigned lru:LRU_BITS; /* LRU time (relative to global lru_clock) or
-                            * LFU data (least significant 8 bits frequency
+                            * LFU/MIN-FSL data (least significant 8 bits frequency
                             * and most significant 16 bits access time). */
+
+    unsigned min_fsl_l:MIN_FSL_L_BITS; /* MIN-FSL age factor L. */
+    float min_fsl; /* MIN-FSL score. */
+
     int refcount;
     void *ptr;
 } robj;
@@ -3148,6 +3154,8 @@ size_t getSlaveKeyWithExpireCount(void);
 
 /* evict.c -- maxmemory handling and LRU eviction. */
 void evictionPoolAlloc(void);
+float MINFSLInitialScore();
+unsigned MINFSLInitialL();
 #define LFU_INIT_VAL 5
 unsigned long LFUGetTimeInMinutes(void);
 uint8_t LFULogIncr(uint8_t value);

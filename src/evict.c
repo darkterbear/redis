@@ -35,6 +35,7 @@
 #include "atomicvar.h"
 #include "script.h"
 #include <math.h>
+#include <float.h>
 
 /* ----------------------------------------------------------------------------
  * Data structures
@@ -238,6 +239,35 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
         pool[k].idle = idle;
         pool[k].dbid = dbid;
     }
+}
+
+/* ----------------------------------------------------------------------------
+ * MIN-FSL implementation.
+ * 
+ * We have 32 total bits of space in each object to store the floating-point 
+ * score for MIN-FSL.
+ * 
+ * The score starts off as the largest possible value for such a float for any 
+ * object. This is updated when the transaction is committed, during which the 
+ * objects in that transaction get updated scores. According to the formula:
+ * 
+ * Score = min(F) / S + XL
+ * 
+ * - F is the frequency of a key, stored in robj->lru. This is why we include 
+ *   LFU flag in our max-memory policy. min(F) is the minimum F of any key in 
+ *   the transaction.
+ * - S is the sum of the sizes of the objects in the transaction.
+ * - L is a running age factor for each key (as in GDSF). Starts at 0. When a 
+ *   key replaces a set of keys, it's L is set to the maximum of the scores of 
+ *   the keys evicted.
+ * - X is a constant factor on L. Set to 0.9.
+ * --------------------------------------------------------------------------*/
+float MINFSLInitialScore() {
+    return FLT_MAX;
+}
+
+unsigned MINFSLInitialL() {
+    return 0;
 }
 
 /* ----------------------------------------------------------------------------

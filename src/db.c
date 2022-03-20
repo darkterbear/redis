@@ -109,6 +109,10 @@ robj *lookupKey(redisDb *db, robj *key, int flags) {
             } else {
                 val->lru = LRU_CLOCK();
             }
+
+            if (server.maxmemory_policy == MAXMEMORY_MIN_FSL) {
+                val->min_fsl = MINFSLInitialScore();
+            }
         }
 
         if (!(flags & (LOOKUP_NOSTATS | LOOKUP_WRITE)))
@@ -217,6 +221,12 @@ void dbOverwrite(redisDb *db, robj *key, robj *val) {
     if (server.maxmemory_policy & MAXMEMORY_FLAG_LFU) {
         val->lru = old->lru;
     }
+
+    if (server.maxmemory_policy == MAXMEMORY_MIN_FSL) {
+        val->min_fsl = old->min_fsl;
+        val->min_fsl_l = old->min_fsl_l;
+    }
+
     /* Although the key is not really deleted from the database, we regard 
     overwrite as two steps of unlink+add, so we still need to call the unlink 
     callback of the module. */
