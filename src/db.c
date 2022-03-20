@@ -111,7 +111,7 @@ robj *lookupKey(redisDb *db, robj *key, int flags) {
             }
 
             if (server.maxmemory_policy == MAXMEMORY_MIN_FSL) {
-                val->min_fsl = MINFSLInitialScore();
+                val->min_fs = MINFSLInitialFS();
             }
         }
 
@@ -223,8 +223,7 @@ void dbOverwrite(redisDb *db, robj *key, robj *val) {
     }
 
     if (server.maxmemory_policy == MAXMEMORY_MIN_FSL) {
-        val->min_fsl = old->min_fsl;
-        val->min_fsl_l = old->min_fsl_l;
+        val->min_fs = old->min_fs;
     }
 
     /* Although the key is not really deleted from the database, we regard 

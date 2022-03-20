@@ -55,8 +55,7 @@ robj *createObject(int type, void *ptr) {
     }
 
     if (server.maxmemory_policy == MAXMEMORY_MIN_FSL) {
-        o->min_fsl = MINFSLInitialScore();
-        o->min_fsl_l = MINFSLInitialL();
+        o->min_fs = MINFSLInitialFS();
     }
 
     return o;
@@ -103,8 +102,7 @@ robj *createEmbeddedStringObject(const char *ptr, size_t len) {
     }
 
     if (server.maxmemory_policy == MAXMEMORY_MIN_FSL) {
-        o->min_fsl = MINFSLInitialScore();
-        o->min_fsl_l = MINFSLInitialL();
+        o->min_fs = MINFSLInitialFS();
     }
 
     sh->len = len;

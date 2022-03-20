@@ -251,23 +251,37 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
  * object. This is updated when the transaction is committed, during which the 
  * objects in that transaction get updated scores. According to the formula:
  * 
- * Score = min(F) / S + XL
+ * Note: X not included, since we need L to be monotonically increasing. XL 
+ * with X < 1 could violate that.
+ * 
+ * Score = min(F) / S + L
  * 
  * - F is the frequency of a key, stored in robj->lru. This is why we include 
  *   LFU flag in our max-memory policy. min(F) is the minimum F of any key in 
  *   the transaction.
  * - S is the sum of the sizes of the objects in the transaction.
- * - L is a running age factor for each key (as in GDSF). Starts at 0. When a 
- *   key replaces a set of keys, it's L is set to the maximum of the scores of 
- *   the keys evicted.
- * - X is a constant factor on L. Set to 0.9.
+ * - L is a global running age factor (as in GDSF). Starts at 0. When keys are 
+ *   evicted, L is set to the maximum of the scores of the keys evicted.
+ * 
+ * We designate min(F) / S as the "stored component", as it is updated/stored
+ * at the end of every transaction. This is what the min_fs field stores.
+ * 
+ * L is tracked globally, and monotonically increases on every eviction. It is
+ * always factored into score calculations as per above, and thus is not in
+ * the "stored component", otherwise we'd need to update the score every time
+ * L changes, which is very often.
  * --------------------------------------------------------------------------*/
-float MINFSLInitialScore() {
+float MINFSLInitialFS() {
     return FLT_MAX;
 }
 
-unsigned MINFSLInitialL() {
-    return 0;
+float minFSL_l = 0;
+float MINFSLGetL() {
+    return minFSL_l;
+}
+
+float MINFSLSetL(float l) {
+    minFSL_l = l;
 }
 
 /* ----------------------------------------------------------------------------
