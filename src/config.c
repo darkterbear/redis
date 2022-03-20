@@ -60,6 +60,7 @@ configEnum maxmemory_policy_enum[] = {
     {"allkeys-lfu",MAXMEMORY_ALLKEYS_LFU},
     {"allkeys-random",MAXMEMORY_ALLKEYS_RANDOM},
     {"noeviction",MAXMEMORY_NO_EVICTION},
+    {"min-fsl", MAXMEMORY_MIN_FSL},
     {NULL, 0}
 };
 
