@@ -180,6 +180,13 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
              * frequency subtracting the actual frequency to the maximum
              * frequency of 255. */
             idle = 255-LFUDecrAndReturn(o);
+            
+            if (server.maxmemory_policy == MAXMEMORY_MIN_FSL) {
+                // Don't include this object if it doesn't have a score yet
+                if (o->min_fs == MINFSLInitialFS()) continue;
+
+                idle = ULLONG_MAX - (o->min_fs + MINFSLGetL());
+            }
         } else if (server.maxmemory_policy == MAXMEMORY_VOLATILE_TTL) {
             /* In this case the sooner the expire the better. */
             idle = ULLONG_MAX - (long)dictGetVal(de);
@@ -271,16 +278,16 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
  * the "stored component", otherwise we'd need to update the score every time
  * L changes, which is very often.
  * --------------------------------------------------------------------------*/
-float MINFSLInitialFS() {
-    return FLT_MAX;
+unsigned long long MINFSLInitialFS() {
+    return ULLONG_MAX;
 }
 
-float minFSL_l = 0;
-float MINFSLGetL() {
+unsigned long long minFSL_l = 0;
+unsigned long long MINFSLGetL() {
     return minFSL_l;
 }
 
-float MINFSLSetL(float l) {
+unsigned long long MINFSLSetL(unsigned long long l) {
     minFSL_l = l;
 }
 
