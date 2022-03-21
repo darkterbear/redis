@@ -535,21 +535,47 @@ void getrangeCommand(client *c) {
     }
 }
 
+/**
+ * We've hijacked this function to act as a "commit" for a transaction. 
+ * This updates the min_fs field (score stored component) for the keys 
+ * involved in the transaction as min(F) / S.
+ */
 void mgetCommand(client *c) {
     int j;
 
+    unsigned long long S = 0; // Size of all keys in transaction, in bytes.
+    unsigned long long minF = 255;
+
+    robj *objects[c->argc - 1];
     addReplyArrayLen(c,c->argc-1);
     for (j = 1; j < c->argc; j++) {
         robj *o = lookupKeyRead(c->db,c->argv[j]);
+        objects[j - 1] = o;
         if (o == NULL) {
             addReplyNull(c);
+
+            // If object is null, that means it wasn't accessed before. 
+            // Frequency = 0
+            minF = 0;
         } else {
             if (o->type != OBJ_STRING) {
                 addReplyNull(c);
             } else {
                 addReplyBulk(c,o);
+
+                S += stringObjectLen(o);
             }
+
+            unsigned long long f = LFUDecrAndReturn(o);
+            if (f < minF) minF = f;
         }
+    }
+
+    // Multiply by a large factor here. minF can take values in [0, 255], 
+    // while S can be much larger (each key in the txn is 1kB, 10 keys -> 10kB).
+    unsigned long long minFS = minF * 10240 / S;
+    for (int i = 0; i < c->argc-1; i++) {
+        objects[i]->min_fs = minFS;
     }
 }
 
