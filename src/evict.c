@@ -631,6 +631,8 @@ int performEvictions(void) {
     server.core_propagates = 1;
     server.propagate_no_multi = 1;
 
+    unsigned long long min_fsl_max_score = 0;
+
     while (mem_freed < (long long)mem_tofree) {
         int j, k, i;
         static unsigned int next_db = 0;
@@ -690,6 +692,16 @@ int performEvictions(void) {
                         /* Ghost... Iterate again. */
                     }
                 }
+            }
+
+            if (server.maxmemory_policy == MAXMEMORY_MIN_FSL && bestkey) {
+                // Find the highest score of the values that we are evicting
+                redisDb* db = server.db+bestdbid;
+                dictEntry *de = dictFind(db->dict, bestkey);
+                robj *o = dictGetVal(de);
+
+                if (o->min_fs + MINFSLGetL() > min_fsl_max_score)
+                    min_fsl_max_score = o->min_fs + MINFSLGetL();
             }
         }
 
@@ -779,6 +791,10 @@ int performEvictions(void) {
             goto cant_free; /* nothing to free... */
         }
     }
+
+    // Update L to be the max score of the values we just evicted
+    MINFSLSetL(min_fsl_max_score);
+
     /* at this point, the memory is OK, or we have reached the time limit */
     result = (isEvictionProcRunning) ? EVICT_RUNNING : EVICT_OK;
 
