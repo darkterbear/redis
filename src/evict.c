@@ -183,9 +183,15 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
             
             if (server.maxmemory_policy == MAXMEMORY_MIN_FSL) {
                 // Don't include this object if it doesn't have a score yet
-                if (o->min_fs == MINFSLInitialFS()) continue;
+                robj* k = dictGetKey(de);
+                
+                if (o->min_fs == MINFSLInitialFS()) {
+                    serverLog(LL_NOTICE, "[TXN_PROJ] Filling eviction pool; key %s no score, skipped", k->ptr);
+                    continue;
+                }
 
                 idle = ULLONG_MAX - (o->min_fs + MINFSLGetL());
+                serverLog(LL_NOTICE, "[TXN_PROJ] Filling eviction pool; key %s score %llu + %llu", k->ptr, o->min_fs, MINFSLGetL());
             }
         } else if (server.maxmemory_policy == MAXMEMORY_VOLATILE_TTL) {
             /* In this case the sooner the expire the better. */
@@ -699,7 +705,9 @@ int performEvictions(void) {
                 redisDb* db = server.db+bestdbid;
                 dictEntry *de = dictFind(db->dict, bestkey);
                 robj *o = dictGetVal(de);
+                robj *k = dictGetKey(de);
 
+                serverLog(LL_NOTICE, "[TXN_PROJ] Evicting key %s score %llu + %llu", k->ptr, o->min_fs, MINFSLGetL());
                 if (o->min_fs + MINFSLGetL() > min_fsl_max_score)
                     min_fsl_max_score = o->min_fs + MINFSLGetL();
             }
@@ -793,6 +801,7 @@ int performEvictions(void) {
     }
 
     // Update L to be the max score of the values we just evicted
+    serverLog(LL_NOTICE, "[TXN_PROJ] Eviction max score %llu, updating L", min_fsl_max_score);
     MINFSLSetL(min_fsl_max_score);
 
     /* at this point, the memory is OK, or we have reached the time limit */

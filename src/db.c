@@ -111,6 +111,7 @@ robj *lookupKey(redisDb *db, robj *key, int flags) {
             }
 
             if (server.maxmemory_policy == MAXMEMORY_MIN_FSL) {
+                serverLog(LL_NOTICE, "[TXN_PROJ] Key %s requested, min_fs set to INF", key->ptr);
                 val->min_fs = MINFSLInitialFS();
             }
         }
@@ -223,6 +224,7 @@ void dbOverwrite(redisDb *db, robj *key, robj *val) {
     }
 
     if (server.maxmemory_policy == MAXMEMORY_MIN_FSL) {
+        serverLog(LL_NOTICE, "[TXN_PROJ] Key %s overwritten, min_fs copied", key->ptr);
         val->min_fs = old->min_fs;
     }
 
