@@ -3153,7 +3153,7 @@ size_t getSlaveKeyWithExpireCount(void);
 void evictionPoolAlloc(void);
 unsigned long long MINFSLInitialFS();
 unsigned long long MINFSLGetL();
-unsigned long long MINFSLSetL();
+void MINFSLSetL();
 #define LFU_INIT_VAL 5
 unsigned long LFUGetTimeInMinutes(void);
 uint8_t LFULogIncr(uint8_t value);

@@ -287,7 +287,7 @@ unsigned long long MINFSLGetL() {
     return minFSL_l;
 }
 
-unsigned long long MINFSLSetL(unsigned long long l) {
+void MINFSLSetL(unsigned long long l) {
     minFSL_l = l;
 }
 
