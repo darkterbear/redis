@@ -191,7 +191,7 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
                 }
 
                 idle = ULLONG_MAX - (o->min_fs + MINFSLGetL());
-                serverLog(LL_NOTICE, "[TXN_PROJ] Filling eviction pool; key %s score %llu + %llu", k->ptr, o->min_fs, MINFSLGetL());
+                serverLog(LL_NOTICE, "[TXN_PROJ] Filling eviction pool; key %s score %u + %u", k->ptr, o->min_fs, MINFSLGetL());
             }
         } else if (server.maxmemory_policy == MAXMEMORY_VOLATILE_TTL) {
             /* In this case the sooner the expire the better. */
@@ -284,16 +284,16 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
  * the "stored component", otherwise we'd need to update the score every time
  * L changes, which is very often.
  * --------------------------------------------------------------------------*/
-unsigned long long MINFSLInitialFS() {
-    return ULLONG_MAX;
+uint32_t MINFSLInitialFS() {
+    return UINT32_MAX;
 }
 
-unsigned long long minFSL_l = 0;
-unsigned long long MINFSLGetL() {
+uint32_t minFSL_l = 0;
+uint32_t MINFSLGetL() {
     return minFSL_l;
 }
 
-void MINFSLSetL(unsigned long long l) {
+void MINFSLSetL(uint32_t l) {
     minFSL_l = l;
 }
 
@@ -637,7 +637,7 @@ int performEvictions(void) {
     server.core_propagates = 1;
     server.propagate_no_multi = 1;
 
-    unsigned long long min_fsl_max_score = 0;
+    uint32_t min_fsl_max_score = 0;
 
     while (mem_freed < (long long)mem_tofree) {
         int j, k, i;
@@ -707,7 +707,7 @@ int performEvictions(void) {
                 robj *o = dictGetVal(de);
                 robj *k = dictGetKey(de);
 
-                serverLog(LL_NOTICE, "[TXN_PROJ] Evicting key %s score %llu + %llu", k->ptr, o->min_fs, MINFSLGetL());
+                serverLog(LL_NOTICE, "[TXN_PROJ] Evicting key %s score %u + %u", k->ptr, o->min_fs, MINFSLGetL());
                 if (o->min_fs + MINFSLGetL() > min_fsl_max_score)
                     min_fsl_max_score = o->min_fs + MINFSLGetL();
             }
@@ -801,7 +801,7 @@ int performEvictions(void) {
     }
 
     // Update L to be the max score of the values we just evicted
-    serverLog(LL_NOTICE, "[TXN_PROJ] Eviction max score %llu, updating L", min_fsl_max_score);
+    serverLog(LL_NOTICE, "[TXN_PROJ] Eviction max score %u, updating L", min_fsl_max_score);
     MINFSLSetL(min_fsl_max_score);
 
     /* at this point, the memory is OK, or we have reached the time limit */

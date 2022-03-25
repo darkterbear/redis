@@ -573,10 +573,9 @@ void mgetCommand(client *c) {
         }
     }
 
-    // Multiply by a large factor here. minF can take values in [0, 255], 
-    // while S can be much larger (each key in the txn is 1kB, 10 keys -> 10kB).
-    unsigned long long minFS = minF == 0 ? 0 : minF * 10240 / S;
-    serverLog(LL_NOTICE, "[TXN_PROJ] Computed minFS %llu * 10240 / %llu", minFS, S);
+    
+    unsigned long long minFS = minF == 0 ? 0 : minF * MIN_FSL_FREQ_FACTOR / S;
+    serverLog(LL_NOTICE, "[TXN_PROJ] Computed minFS %llu * %u / %llu", minFS, MIN_FSL_FREQ_FACTOR, S);
     for (int i = 0; i < c->argc-1; i++) {
         objects[i]->min_fs = minFS;
     }

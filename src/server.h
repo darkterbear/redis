@@ -851,11 +851,17 @@ typedef struct redisObject {
                             * LFU/MIN-FSL data (least significant 8 bits frequency
                             * and most significant 16 bits access time). */
 
-    unsigned long long min_fs; /* MIN-FSL stored component. */
+    uint32_t min_fs; /* MIN-FSL stored component. */
 
     int refcount;
     void *ptr;
 } robj;
+
+// The factor by which we multiply min(F) in MIN-FSL score calculation. min(F) can 
+// take values in [0, 255], while S can be much larger (each key in the txn is 1kB, 
+// 10 keys -> 10kB). To maintain distinction between different min(F), we multiply
+// it by a factor.
+#define MIN_FSL_FREQ_FACTOR 10240
 
 /* The a string name for an object's type as listed above
  * Native types are checked against the OBJ_STRING, OBJ_LIST, OBJ_* defines,
@@ -3151,8 +3157,8 @@ size_t getSlaveKeyWithExpireCount(void);
 
 /* evict.c -- maxmemory handling and LRU eviction. */
 void evictionPoolAlloc(void);
-unsigned long long MINFSLInitialFS();
-unsigned long long MINFSLGetL();
+uint32_t MINFSLInitialFS();
+uint32_t MINFSLGetL();
 void MINFSLSetL();
 #define LFU_INIT_VAL 5
 unsigned long LFUGetTimeInMinutes(void);
