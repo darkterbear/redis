@@ -577,7 +577,7 @@ void mgetCommand(client *c) {
     unsigned long long minFS = minF == 0 ? 0 : minF * MIN_FSL_FREQ_FACTOR / S;
     serverLog(LL_NOTICE, "[TXN_PROJ] Computed minFS %llu * %u / %llu", minFS, MIN_FSL_FREQ_FACTOR, S);
     for (int i = 0; i < c->argc-1; i++) {
-        objects[i]->min_fs = minFS;
+        if (objects[i] != NULL) objects[i]->min_fs = minFS;
     }
 }
 
