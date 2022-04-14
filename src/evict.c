@@ -707,7 +707,7 @@ int performEvictions(void) {
                 robj *o = dictGetVal(de);
                 robj *k = dictGetKey(de);
 
-                serverLog(LL_NOTICE, "[TXN_PROJ] Evicting key %s score %u + %u", k->ptr, o->min_fs, MINFSLGetL());
+                serverLog(LL_NOTICE, "[TXN_PROJ] Evicting key %s score %u + %u", o->min_fs, MINFSLGetL());
                 if (o->min_fs + MINFSLGetL() > min_fsl_max_score)
                     min_fsl_max_score = o->min_fs + MINFSLGetL();
             }
