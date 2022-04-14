@@ -181,9 +181,7 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
              * frequency of 255. */
             
             if (server.maxmemory_policy == MAXMEMORY_MIN_FSL) {
-                // Don't include this object if it doesn't have a score yet
-                robj* k = dictGetKey(de);
-                
+                // Don't include this object if it doesn't have a score yet                
                 if (o->min_fs == MINFSLInitialFS()) {
                     // serverLog(LL_NOTICE, "[TXN_PROJ] Filling eviction pool; no score, skipped");
                     continue;
