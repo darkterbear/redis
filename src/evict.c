@@ -186,12 +186,12 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
                 robj* k = dictGetKey(de);
                 
                 if (o->min_fs == MINFSLInitialFS()) {
-                    serverLog(LL_NOTICE, "[TXN_PROJ] Filling eviction pool; key %s no score, skipped", k->ptr);
+                    serverLog(LL_NOTICE, "[TXN_PROJ] Filling eviction pool; no score, skipped");
                     continue;
                 }
 
                 idle = ULLONG_MAX - (o->min_fs + MINFSLGetL());
-                serverLog(LL_NOTICE, "[TXN_PROJ] Filling eviction pool; key %s score %u + %u", k->ptr, o->min_fs, MINFSLGetL());
+                serverLog(LL_NOTICE, "[TXN_PROJ] Filling eviction pool; key score %u + %u", o->min_fs, MINFSLGetL());
             }
         } else if (server.maxmemory_policy == MAXMEMORY_VOLATILE_TTL) {
             /* In this case the sooner the expire the better. */
