@@ -187,7 +187,8 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
                     continue;
                 }
 
-                idle = ULLONG_MAX - (o->min_fs + MINFSLGetL());
+                idle = ULLONG_MAX - (o->min_fs + MINFSLGetL()) * 10000;
+                // idle = ULLONG_MAX - (o->min_fs + MINFSLGetL());
                 // serverLog(LL_NOTICE, "[TXN_PROJ] Filling eviction pool; key score %u + %u", o->min_fs, MINFSLGetL());
             } else {
                 idle = 255-LFUDecrAndReturn(o);
@@ -283,16 +284,16 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
  * the "stored component", otherwise we'd need to update the score every time
  * L changes, which is very often.
  * --------------------------------------------------------------------------*/
-uint32_t MINFSLInitialFS() {
-    return UINT32_MAX;
+double MINFSLInitialFS() {
+    return DBL_MAX;
 }
 
-uint32_t minFSL_l = 0;
-uint32_t MINFSLGetL() {
+double minFSL_l = 0;
+double MINFSLGetL() {
     return minFSL_l;
 }
 
-void MINFSLSetL(uint32_t l) {
+void MINFSLSetL(double l) {
     minFSL_l = l;
 }
 
@@ -636,7 +637,7 @@ int performEvictions(void) {
     server.core_propagates = 1;
     server.propagate_no_multi = 1;
 
-    uint32_t min_fsl_max_score = 0;
+    double min_fsl_max_score = 0;
 
     while (mem_freed < (long long)mem_tofree) {
         int j, k, i;

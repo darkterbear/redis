@@ -556,7 +556,7 @@ void mgetCommand(client *c) {
 
             // If object is null, that means it wasn't accessed before. 
             // Frequency = 0
-            minF = 0;
+            minF = 1;
             // serverLog(LL_NOTICE, "[TXN_PROJ] Committing, key %s freq. %llu size 0", c->argv[j]->ptr, 0);
         } else {
             if (o->type != OBJ_STRING) {
@@ -564,7 +564,7 @@ void mgetCommand(client *c) {
             } else {
                 addReplyBulk(c,o);
 
-                S += stringObjectLen(o);
+                S++;
             }
 
             unsigned long long f = LFUDecrAndReturn(o);
@@ -573,8 +573,9 @@ void mgetCommand(client *c) {
         }
     }
 
-    
-    unsigned long long minFS = minF == 0 ? 0 : minF * MIN_FSL_FREQ_FACTOR / S;
+    if (minF == 0) serverLog(LL_WARNING, "[TXN_PROJ] minF == 0");
+
+    double minFS = (minF * 1.0) / S;
     // serverLog(LL_NOTICE, "[TXN_PROJ] Computed minFS %llu * %u / %llu", minFS, MIN_FSL_FREQ_FACTOR, S);
     for (int i = 0; i < c->argc-1; i++) {
         if (objects[i] != NULL) objects[i]->min_fs = minFS;
