@@ -531,6 +531,7 @@ typedef enum {
 #define MAXMEMORY_ALLKEYS_RANDOM ((6<<8)|MAXMEMORY_FLAG_ALLKEYS)
 #define MAXMEMORY_NO_EVICTION (7<<8)
 #define MAXMEMORY_MIN_FSL ((8<<8)|MAXMEMORY_FLAG_LFU|MAXMEMORY_FLAG_ALLKEYS)
+#define MAXMEMORY_GDSF ((9<<8)|MAXMEMORY_FLAG_LFU|MAXMEMORY_FLAG_ALLKEYS)
 
 /* Units */
 #define UNIT_SECONDS 0
@@ -848,20 +849,20 @@ typedef struct redisObject {
     unsigned type:4;
     unsigned encoding:4;
     unsigned lru:LRU_BITS; /* LRU time (relative to global lru_clock) or
-                            * LFU/MIN-FSL data (least significant 8 bits frequency
+                            * LFU/MIN-FSL/GDSF data (least significant 8 bits frequency
                             * and most significant 16 bits access time). */
 
-    double min_fs; /* MIN-FSL stored component. */
+    double fs; /* FSL stored component. */
 
     int refcount;
     void *ptr;
 } robj;
 
-// The factor by which we multiply min(F) in MIN-FSL score calculation. min(F) can 
+// The factor by which we multiply min(F) in FSL score calculation. min(F) can 
 // take values in [0, 255], while S can be much larger (each key in the txn is 1kB, 
 // 10 keys -> 10kB). To maintain distinction between different min(F), we multiply
 // it by a factor.
-#define MIN_FSL_FREQ_FACTOR 10240
+#define FSL_FREQ_FACTOR 10240
 
 /* The a string name for an object's type as listed above
  * Native types are checked against the OBJ_STRING, OBJ_LIST, OBJ_* defines,
@@ -3157,9 +3158,9 @@ size_t getSlaveKeyWithExpireCount(void);
 
 /* evict.c -- maxmemory handling and LRU eviction. */
 void evictionPoolAlloc(void);
-double MINFSLInitialFS();
-double MINFSLGetL();
-void MINFSLSetL(double l);
+double FSLInitialFS();
+double FSLGetL();
+void FSLSetL(double l);
 #define LFU_INIT_VAL 5
 unsigned long LFUGetTimeInMinutes(void);
 uint8_t LFULogIncr(uint8_t value);

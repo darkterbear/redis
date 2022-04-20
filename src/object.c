@@ -54,9 +54,9 @@ robj *createObject(int type, void *ptr) {
         o->lru = LRU_CLOCK();
     }
 
-    if (server.maxmemory_policy == MAXMEMORY_MIN_FSL) {
+    if (server.maxmemory_policy == MAXMEMORY_MIN_FSL || server.maxmemory_policy == MAXMEMORY_GDSF) {
         // serverLog(LL_NOTICE, "[TXN_PROJ] Creating object, initializing score to max");
-        o->min_fs = MINFSLInitialFS();
+        o->fs = FSLInitialFS();
     }
 
     return o;
@@ -102,9 +102,9 @@ robj *createEmbeddedStringObject(const char *ptr, size_t len) {
         o->lru = LRU_CLOCK();
     }
 
-    if (server.maxmemory_policy == MAXMEMORY_MIN_FSL) {
+    if (server.maxmemory_policy == MAXMEMORY_MIN_FSL || server.maxmemory_policy == MAXMEMORY_GDSF) {
         // serverLog(LL_NOTICE, "[TXN_PROJ] Creating embedded string object, initializing score to max");
-        o->min_fs = MINFSLInitialFS();
+        o->fs = FSLInitialFS();
     }
 
     sh->len = len;

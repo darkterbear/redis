@@ -180,16 +180,16 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
              * frequency subtracting the actual frequency to the maximum
              * frequency of 255. */
             
-            if (server.maxmemory_policy == MAXMEMORY_MIN_FSL) {
+            if (server.maxmemory_policy == MAXMEMORY_MIN_FSL || server.maxmemory_policy == MAXMEMORY_GDSF) {
                 // Don't include this object if it doesn't have a score yet                
-                if (o->min_fs == MINFSLInitialFS()) {
+                if (o->fs == FSLInitialFS()) {
                     // serverLog(LL_NOTICE, "[TXN_PROJ] Filling eviction pool; no score, skipped");
                     continue;
                 }
 
-                idle = ULLONG_MAX - (o->min_fs + MINFSLGetL()) * 10000;
-                // idle = ULLONG_MAX - (o->min_fs + MINFSLGetL());
-                // serverLog(LL_NOTICE, "[TXN_PROJ] Filling eviction pool; key score %u + %u", o->min_fs, MINFSLGetL());
+                idle = ULLONG_MAX - (o->fs + FSLGetL()) * 10000;
+                // idle = ULLONG_MAX - (o->fs + FSLGetL());
+                // serverLog(LL_NOTICE, "[TXN_PROJ] Filling eviction pool; key score %u + %u", o->fs, FSLGetL());
             } else {
                 idle = 255-LFUDecrAndReturn(o);
             }
@@ -255,10 +255,10 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
 }
 
 /* ----------------------------------------------------------------------------
- * MIN-FSL implementation.
+ * MIN-FSL & GDSF implementation.
  * 
  * We have 32 total bits of space in each object to store the floating-point 
- * score for MIN-FSL.
+ * score for FSL.
  * 
  * The score starts off as the largest possible value for such a float for any 
  * object. This is updated when the transaction is committed, during which the 
@@ -267,34 +267,36 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
  * Note: X not included, since we need L to be monotonically increasing. XL 
  * with X < 1 could violate that.
  * 
- * Score = min(F) / S + L
+ * MIN-FSL Score = min(F) / S + L
+ * GDSF Score = F / S + L
  * 
  * - F is the frequency of a key, stored in robj->lru. This is why we include 
  *   LFU flag in our max-memory policy. min(F) is the minimum F of any key in 
  *   the transaction.
  * - S is the sum of the sizes of the objects in the transaction.
- * - L is a global running age factor (as in GDSF). Starts at 0. When keys are 
+ * - L is a global running age factor. Starts at 0. When keys are 
  *   evicted, L is set to the maximum of the scores of the keys evicted.
  * 
- * We designate min(F) / S as the "stored component", as it is updated/stored
- * at the end of every transaction. This is what the min_fs field stores.
+ * We designate [min(F) / S] or [F / S] as the "stored component" (for MIN-FSL 
+ * and GDSF respectively), as it is updated/stored at the end of every transaction. 
+ * This is what the fs field stores.
  * 
  * L is tracked globally, and monotonically increases on every eviction. It is
  * always factored into score calculations as per above, and thus is not in
  * the "stored component", otherwise we'd need to update the score every time
  * L changes, which is very often.
  * --------------------------------------------------------------------------*/
-double MINFSLInitialFS() {
+double FSLInitialFS() {
     return DBL_MAX;
 }
 
-double minFSL_l = 0;
-double MINFSLGetL() {
-    return minFSL_l;
+double fsl_l = 0;
+double FSLGetL() {
+    return fsl_l;
 }
 
-void MINFSLSetL(double l) {
-    minFSL_l = l;
+void FSLSetL(double l) {
+    fsl_l = l;
 }
 
 /* ----------------------------------------------------------------------------
@@ -637,7 +639,7 @@ int performEvictions(void) {
     server.core_propagates = 1;
     server.propagate_no_multi = 1;
 
-    double min_fsl_max_score = 0;
+    double fsl_max_score = 0;
 
     while (mem_freed < (long long)mem_tofree) {
         int j, k, i;
@@ -700,15 +702,15 @@ int performEvictions(void) {
                 }
             }
 
-            if (server.maxmemory_policy == MAXMEMORY_MIN_FSL && bestkey) {
+            if ((server.maxmemory_policy == MAXMEMORY_MIN_FSL || server.maxmemory_policy == MAXMEMORY_GDSF) && bestkey) {
                 // Find the highest score of the values that we are evicting
                 redisDb* db = server.db+bestdbid;
                 dictEntry *de = dictFind(db->dict, bestkey);
                 robj *o = dictGetVal(de);
 
-                // serverLog(LL_NOTICE, "[TXN_PROJ] Evicting key score %u + %u", o->min_fs, MINFSLGetL());
-                if (o->min_fs + MINFSLGetL() > min_fsl_max_score)
-                    min_fsl_max_score = o->min_fs + MINFSLGetL();
+                // serverLog(LL_NOTICE, "[TXN_PROJ] Evicting key score %u + %u", o->fs, FSLGetL());
+                if (o->fs + FSLGetL() > fsl_max_score)
+                    fsl_max_score = o->fs + FSLGetL();
             }
         }
 
@@ -800,8 +802,8 @@ int performEvictions(void) {
     }
 
     // Update L to be the max score of the values we just evicted
-    // serverLog(LL_NOTICE, "[TXN_PROJ] Eviction max score %u, updating L", min_fsl_max_score);
-    MINFSLSetL(min_fsl_max_score);
+    // serverLog(LL_NOTICE, "[TXN_PROJ] Eviction max score %u, updating L", fsl_max_score);
+    FSLSetL(fsl_max_score);
 
     /* at this point, the memory is OK, or we have reached the time limit */
     result = (isEvictionProcRunning) ? EVICT_RUNNING : EVICT_OK;

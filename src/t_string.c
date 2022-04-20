@@ -120,6 +120,11 @@ void setGenericCommand(client *c, int flags, robj *key, robj *val, robj *expire,
         addReply(c, ok_reply ? ok_reply : shared.ok);
     }
 
+    if (server.maxmemory_policy == MAXMEMORY_GDSF) {
+      unsigned long long S = 1;
+      val->fs = (LFUDecrAndReturn(val) * 1.0) / S;
+    }
+
     /* Propagate without the GET argument (Isn't needed if we had expire since in that case we completely re-written the command argv) */
     if ((flags & OBJ_SET_GET) && !expire) {
         int argc = 0;
@@ -319,6 +324,11 @@ int getGenericCommand(client *c) {
 
     if (checkType(c,o,OBJ_STRING)) {
         return C_ERR;
+    }
+
+    if (server.maxmemory_policy == MAXMEMORY_GDSF) {
+      unsigned long long S = 1;
+      o->fs = (LFUDecrAndReturn(o) * 1.0) / S;
     }
 
     addReplyBulk(c,o);
@@ -537,7 +547,7 @@ void getrangeCommand(client *c) {
 
 /**
  * We've hijacked this function to act as a "commit" for a transaction. 
- * This updates the min_fs field (score stored component) for the keys 
+ * This updates the fs field (score stored component) for the keys 
  * involved in the transaction as min(F) / S.
  */
 void mgetCommand(client *c) {
@@ -573,12 +583,12 @@ void mgetCommand(client *c) {
         }
     }
 
-    if (minF == 0) serverLog(LL_WARNING, "[TXN_PROJ] minF == 0");
-
-    double minFS = (minF * 1.0) / S;
-    // serverLog(LL_NOTICE, "[TXN_PROJ] Computed minFS %llu * %u / %llu", minFS, MIN_FSL_FREQ_FACTOR, S);
-    for (int i = 0; i < c->argc-1; i++) {
-        if (objects[i] != NULL) objects[i]->min_fs = minFS;
+    if (server.maxmemory_policy == MAXMEMORY_MIN_FSL) {
+      double minFS = (minF * 1.0) / S;
+      // serverLog(LL_NOTICE, "[TXN_PROJ] Computed minFS %llu * %u / %llu", minFS, FSL_FREQ_FACTOR, S);
+      for (int i = 0; i < c->argc-1; i++) {
+          if (objects[i] != NULL) objects[i]->fs = minFS;
+      }
     }
 }
 

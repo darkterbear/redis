@@ -110,9 +110,9 @@ robj *lookupKey(redisDb *db, robj *key, int flags) {
                 val->lru = LRU_CLOCK();
             }
 
-            if (server.maxmemory_policy == MAXMEMORY_MIN_FSL) {
-                // serverLog(LL_NOTICE, "[TXN_PROJ] Key %s requested, min_fs set to INF", key->ptr);
-                val->min_fs = MINFSLInitialFS();
+            if (server.maxmemory_policy == MAXMEMORY_MIN_FSL || server.maxmemory_policy == MAXMEMORY_GDSF) {
+                // serverLog(LL_NOTICE, "[TXN_PROJ] Key %s requested, fs set to INF", key->ptr);
+                val->fs = FSLInitialFS();
             }
         }
 
@@ -223,9 +223,9 @@ void dbOverwrite(redisDb *db, robj *key, robj *val) {
         val->lru = old->lru;
     }
 
-    if (server.maxmemory_policy == MAXMEMORY_MIN_FSL) {
-        // serverLog(LL_NOTICE, "[TXN_PROJ] Key %s overwritten, min_fs copied", key->ptr);
-        val->min_fs = old->min_fs;
+    if (server.maxmemory_policy == MAXMEMORY_MIN_FSL || server.maxmemory_policy == MAXMEMORY_GDSF) {
+        // serverLog(LL_NOTICE, "[TXN_PROJ] Key %s overwritten, fs copied", key->ptr);
+        val->fs = old->fs;
     }
 
     /* Although the key is not really deleted from the database, we regard 
