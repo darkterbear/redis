@@ -187,7 +187,7 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
                     continue;
                 }
 
-                idle = ULLONG_MAX - (o->fs + FSLGetL()) * 10000;
+                idle = ULLONG_MAX - (o->fs + FSLGetL() * 0.9) * 10000;
                 // idle = ULLONG_MAX - (o->fs + FSLGetL());
                 // serverLog(LL_NOTICE, "[TXN_PROJ] Filling eviction pool; key score %u + %u", o->fs, FSLGetL());
             } else {
@@ -710,7 +710,7 @@ int performEvictions(void) {
 
                 // serverLog(LL_NOTICE, "[TXN_PROJ] Evicting key score %u + %u", o->fs, FSLGetL());
                 if (o->fs + FSLGetL() > fsl_max_score)
-                    fsl_max_score = o->fs + FSLGetL();
+                    fsl_max_score = ((int) (o->fs * 10000) + (int) (FSLGetL() * 0.9 * 10000)) / 10000.0;
             }
         }
 
