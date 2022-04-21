@@ -90,7 +90,8 @@ void setGenericCommand(client *c, int flags, robj *key, robj *val, robj *expire,
 
     found = (lookupKeyWrite(c->db,key) != NULL);
 
-    if ((flags & OBJ_SET_NX && found) ||
+    // Since SETXX doesn't exist as a command, we hijack SETNX to be "set if exists"
+    if ((flags & OBJ_SET_NX && !found) ||
         (flags & OBJ_SET_XX && !found))
     {
         if (!(flags & OBJ_SET_GET)) {
