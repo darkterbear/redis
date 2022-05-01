@@ -123,7 +123,7 @@ void setGenericCommand(client *c, int flags, robj *key, robj *val, robj *expire,
 
     if (server.maxmemory_policy == MAXMEMORY_GDSF) {
       unsigned long long S = 1;
-      val->fs = (LFUDecrAndReturn(val) * 1.0) / S;
+      val->fsl = (LFUDecrAndReturn(val) * 1.0) / S + FSLGetL() * 0.9;
     }
 
     /* Propagate without the GET argument (Isn't needed if we had expire since in that case we completely re-written the command argv) */
@@ -329,7 +329,7 @@ int getGenericCommand(client *c) {
 
     if (server.maxmemory_policy == MAXMEMORY_GDSF) {
       unsigned long long S = 1;
-      o->fs = (LFUDecrAndReturn(o) * 1.0) / S;
+      o->fsl = (LFUDecrAndReturn(o) * 1.0) / S + FSLGetL() * 0.9;
     }
 
     addReplyBulk(c,o);
@@ -585,10 +585,10 @@ void mgetCommand(client *c) {
     }
 
     if (server.maxmemory_policy == MAXMEMORY_MIN_FSL) {
-      double minFS = (minF * 1.0) / S;
+      double minFSL = (minF * 1.0) / S + FSLGetL() * 0.9;
       // serverLog(LL_NOTICE, "[TXN_PROJ] Computed minFS %llu * %u / %llu", minFS, FSL_FREQ_FACTOR, S);
       for (int i = 0; i < c->argc-1; i++) {
-          if (objects[i] != NULL) objects[i]->fs = minFS;
+          if (objects[i] != NULL) objects[i]->fsl = minFSL;
       }
     }
 }

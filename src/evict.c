@@ -182,12 +182,12 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
             
             if (server.maxmemory_policy == MAXMEMORY_MIN_FSL || server.maxmemory_policy == MAXMEMORY_GDSF) {
                 // Don't include this object if it doesn't have a score yet                
-                if (o->fs == FSLInitialFS()) {
+                if (o->fsl == FSLInitialScore()) {
                     // serverLog(LL_NOTICE, "[TXN_PROJ] Filling eviction pool; no score, skipped");
                     continue;
                 }
 
-                idle = ULLONG_MAX - (o->fs + FSLGetL() * 0.9) * 10000;
+                idle = ULLONG_MAX - (o->fsl) * 10000;
                 // idle = ULLONG_MAX - (o->fs + FSLGetL());
                 // serverLog(LL_NOTICE, "[TXN_PROJ] Filling eviction pool; key score %u + %u", o->fs, FSLGetL());
             } else {
@@ -277,16 +277,10 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
  * - L is a global running age factor. Starts at 0. When keys are 
  *   evicted, L is set to the maximum of the scores of the keys evicted.
  * 
- * We designate [min(F) / S] or [F / S] as the "stored component" (for MIN-FSL 
- * and GDSF respectively), as it is updated/stored at the end of every transaction. 
- * This is what the fs field stores.
- * 
- * L is tracked globally, and monotonically increases on every eviction. It is
- * always factored into score calculations as per above, and thus is not in
- * the "stored component", otherwise we'd need to update the score every time
- * L changes, which is very often.
+ * We store [min(F) / S + L] or [F / S + L] as the score for MIN-FSL 
+ * and GDSF respectively at time of commit/admission.
  * --------------------------------------------------------------------------*/
-double FSLInitialFS() {
+double FSLInitialScore() {
     return DBL_MAX;
 }
 
@@ -709,8 +703,8 @@ int performEvictions(void) {
                 robj *o = dictGetVal(de);
 
                 // serverLog(LL_NOTICE, "[TXN_PROJ] Evicting key score %u + %u", o->fs, FSLGetL());
-                if (o->fs + FSLGetL() > fsl_max_score)
-                    fsl_max_score = ((int) (o->fs * 10000) + (int) (FSLGetL() * 0.9 * 10000)) / 10000.0;
+                if (o->fsl > fsl_max_score)
+                    fsl_max_score = ((int) (o->fsl * 10000)) / 10000.0;
             }
         }
 
