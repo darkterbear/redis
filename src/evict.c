@@ -180,7 +180,7 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
              * frequency subtracting the actual frequency to the maximum
              * frequency of 255. */
             
-            if (server.maxmemory_policy == MAXMEMORY_MIN_FSL || server.maxmemory_policy == MAXMEMORY_GDSF) {
+            if (server.maxmemory_policy == MAXMEMORY_MIN_FSL || server.maxmemory_policy == MAXMEMORY_AVG_FSL || server.maxmemory_policy == MAXMEMORY_GDSF) {
                 // Don't include this object if it doesn't have a score yet                
                 if (o->fsl == FSLInitialScore()) {
                     // serverLog(LL_NOTICE, "[TXN_PROJ] Filling eviction pool; no score, skipped");
@@ -268,6 +268,7 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
  * with X < 1 could violate that.
  * 
  * MIN-FSL Score = min(F) / S + L
+ * AVG-FSL Score = cumulative(min(F) / S) / num_requests + L
  * GDSF Score = F / S + L
  * 
  * - F is the frequency of a key, stored in robj->lru. This is why we include 
@@ -279,6 +280,9 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
  * 
  * We store [min(F) / S + L] or [F / S + L] as the score for MIN-FSL 
  * and GDSF respectively at time of commit/admission.
+ * 
+ * For AVG-FSL, we also store the cumulative sum of min(F) / S in total_fs, 
+ * and the number of requests in number_fs.
  * --------------------------------------------------------------------------*/
 double FSLInitialScore() {
     return DBL_MAX;
@@ -696,7 +700,7 @@ int performEvictions(void) {
                 }
             }
 
-            if ((server.maxmemory_policy == MAXMEMORY_MIN_FSL || server.maxmemory_policy == MAXMEMORY_GDSF) && bestkey) {
+            if ((server.maxmemory_policy == MAXMEMORY_MIN_FSL || server.maxmemory_policy == MAXMEMORY_AVG_FSL || server.maxmemory_policy == MAXMEMORY_GDSF) && bestkey) {
                 // Find the highest score of the values that we are evicting
                 redisDb* db = server.db+bestdbid;
                 dictEntry *de = dictFind(db->dict, bestkey);

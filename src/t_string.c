@@ -593,6 +593,14 @@ void mgetCommand(client *c) {
       for (int i = 0; i < c->argc-1; i++) {
           if (objects[i] != NULL) objects[i]->fsl = minFSL;
       }
+    } else if (server.maxmemory_policy == MAXMEMORY_AVG_FSL) {
+      for (int i = 0; i < c->argc-1; i++) {
+          if (objects[i] != NULL) {
+            objects[i]->total_fs += (minF * 1.0) / S;
+            objects[i]->number_fs++;
+            objects[i]->fsl = objects[i]->total_fs / objects[i]->number_fs + FSLGetL() * MIN_FSL_L_FACTOR;
+          }
+      }
     }
 }
 

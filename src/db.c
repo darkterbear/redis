@@ -226,6 +226,8 @@ void dbOverwrite(redisDb *db, robj *key, robj *val) {
     if (server.maxmemory_policy == MAXMEMORY_MIN_FSL || server.maxmemory_policy == MAXMEMORY_GDSF) {
         // serverLog(LL_NOTICE, "[TXN_PROJ] Key %s overwritten, fs copied", key->ptr);
         val->fsl = old->fsl;
+        val->number_fs = old->number_fs;
+        val->total_fs = old->total_fs;
     }
 
     /* Although the key is not really deleted from the database, we regard 

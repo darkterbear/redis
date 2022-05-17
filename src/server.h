@@ -531,7 +531,8 @@ typedef enum {
 #define MAXMEMORY_ALLKEYS_RANDOM ((6<<8)|MAXMEMORY_FLAG_ALLKEYS)
 #define MAXMEMORY_NO_EVICTION (7<<8)
 #define MAXMEMORY_MIN_FSL ((8<<8)|MAXMEMORY_FLAG_LFU|MAXMEMORY_FLAG_ALLKEYS)
-#define MAXMEMORY_GDSF ((9<<8)|MAXMEMORY_FLAG_LFU|MAXMEMORY_FLAG_ALLKEYS)
+#define MAXMEMORY_AVG_FSL ((9<<8)|MAXMEMORY_FLAG_LFU|MAXMEMORY_FLAG_ALLKEYS)
+#define MAXMEMORY_GDSF ((10<<8)|MAXMEMORY_FLAG_LFU|MAXMEMORY_FLAG_ALLKEYS)
 
 /* Units */
 #define UNIT_SECONDS 0
@@ -853,6 +854,9 @@ typedef struct redisObject {
                             * and most significant 16 bits access time). */
 
     double fsl; /* MIN-FSL/GDSF score. */
+
+    unsigned number_fs; /* Count of requests to this key for AVG-FSL. */
+    double total_fs; /* Cumulative FS for AVG-FSL. */
 
     int refcount;
     void *ptr;
