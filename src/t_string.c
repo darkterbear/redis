@@ -622,7 +622,7 @@ void mgetCommand(client *c) {
       // naive grouping
       int even = (c->argc-1)/2 + 1;
       int pow_set_size = pow(2, c->argc-1);
-      double scores2[pow_set_size*pow_set_size];
+      double scores2[pow_set_size];
     //   for (int i = 0; i < pow_set_size; i++) {
       for(int counter = 0; counter < pow_set_size; counter++) {
         double score = 0.0;
