@@ -626,7 +626,7 @@ void mgetCommand(client *c) {
     //   for (int i = 0; i < pow_set_size; i++) {
       for(int counter = 0; counter < pow_set_size; counter++) {
         double score = 0.0;
-        for (int j = 0; j < pow_set_size; j++) {
+        for (int j = 0; j < log(pow_set_size); j++) {
           for(int i = 0; i < c->argc-1; i++) {
             if(objects[i] != NULL) {
               int even = (minF * 1.0) / S;
