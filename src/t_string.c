@@ -629,7 +629,7 @@ void mgetCommand(client *c) {
         for (int j = 0; j < pow_set_size; j++) {
           for(int i = 0; i < c->argc-1; i++) {
             if(objects[i] != NULL) {
-              even = (minF * 1.0) / S;
+              int even = (minF * 1.0) / S;
               objects[i]->total_fs += 0;
             //   objects[i]->number_fs++;
             //   objects[i]->number_fs--;
