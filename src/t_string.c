@@ -603,44 +603,44 @@ void mgetCommand(client *c) {
       }
 
       // interchangeable path
-    //   int odd = (c->argc-1)/2 + 1;
-    //   double scores[(c->argc-1)*(c->argc-1)];
-    //   for (int j = 0; j < c->argc-1; j++) {
-    //       for (int i = 0; i < c->argc-1; i++) {
-    //         if (objects[i] != NULL) {
-    //             odd = (minF * 1.0) / S;
-    //             objects[i]->total_fs += 0;
-    //             objects[i]->number_fs++;
-    //             objects[i]->number_fs--;
-    //             odd = objects[i]->total_fs / objects[i]->number_fs + FSLGetL() * MIN_FSL_L_FACTOR;
-    //             objects[i]->fsl += 0;
-    //             scores[i] = objects[i]->fsl;
-    //         }
-    //       }
-    //   }
-
-      // naive grouping
-      int even = (c->argc-1)/2 + 1;
-      int pow_set_size = pow(2, c->argc-1);
-      double scores2[pow_set_size];
-    //   for (int i = 0; i < pow_set_size; i++) {
-      for(int counter = 0; counter < pow_set_size; counter++) {
-        double score = 0.0;
-        for (int j = 0; j < log(pow_set_size); j++) {
-          for(int i = 0; i < c->argc-1; i++) {
-            if(objects[i] != NULL) {
-              int even = (minF * 1.0) / S;
-              objects[i]->total_fs += 0;
-            //   objects[i]->number_fs++;
-            //   objects[i]->number_fs--;
-              even = objects[i]->total_fs / objects[i]->number_fs + FSLGetL() * MIN_FSL_L_FACTOR;
-              objects[i]->fsl += 0;
-              score = objects[i]->fsl;
+      int odd = (c->argc-1)/2 + 1;
+      double scores[(c->argc-1)*(c->argc-1)];
+      for (int j = 0; j < c->argc-1; j++) {
+          for (int i = 0; i < c->argc-1; i++) {
+            if (objects[i] != NULL) {
+                odd = (minF * 1.0) / S;
+                objects[i]->total_fs += 0;
+                objects[i]->number_fs++;
+                objects[i]->number_fs--;
+                odd = objects[i]->total_fs / objects[i]->number_fs + FSLGetL() * MIN_FSL_L_FACTOR;
+                objects[i]->fsl += 0;
+                scores[i] = objects[i]->fsl;
             }
           }
-          scores2[counter] = score;
-        }
       }
+
+      // naive grouping
+    //   int even = (c->argc-1)/2 + 1;
+    //   int pow_set_size = pow(2, c->argc-1);
+    //   double scores2[pow_set_size];
+    // //   for (int i = 0; i < pow_set_size; i++) {
+    //   for(int counter = 0; counter < pow_set_size; counter++) {
+    //     double score = 0.0;
+    //     for (int j = 0; j < log(pow_set_size); j++) {
+    //       for(int i = 0; i < c->argc-1; i++) {
+    //         if(objects[i] != NULL) {
+    //           int even = (minF * 1.0) / S;
+    //           objects[i]->total_fs += 0;
+    //         //   objects[i]->number_fs++;
+    //         //   objects[i]->number_fs--;
+    //           even = objects[i]->total_fs / objects[i]->number_fs + FSLGetL() * MIN_FSL_L_FACTOR;
+    //           objects[i]->fsl += 0;
+    //           score = objects[i]->fsl;
+    //         }
+    //       }
+    //       scores2[counter] = score;
+    //     }
+    //   }
 
     }
 }
