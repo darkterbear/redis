@@ -603,21 +603,21 @@ void mgetCommand(client *c) {
       }
 
       // interchangeable path
-    //   int odd = (c->argc-1)/2 + 1;
-    //   double scores[(c->argc-1)*(c->argc-1)];
-    //   for (int j = 0; j < c->argc-1; j++) {
-    //       for (int i = 0; i < c->argc-1; i++) {
-    //         if (objects[i] != NULL) {
-    //             odd = (minF * 1.0) / S;
-    //             objects[i]->total_fs += 0;
-    //             objects[i]->number_fs++;
-    //             objects[i]->number_fs--;
-    //             odd = objects[i]->total_fs / objects[i]->number_fs + FSLGetL() * MIN_FSL_L_FACTOR;
-    //             objects[i]->fsl += 0;
-    //             scores[i] = objects[i]->fsl;
-    //         }
-    //       }
-    //   }
+      int odd = (c->argc-1)/2 + 1;
+      double scores[(c->argc-1)*(c->argc-1)];
+      for (int j = 0; j < c->argc-1; j++) {
+          for (int i = 0; i < c->argc-1; i++) {
+            if (objects[i] != NULL) {
+                odd = (minF * 1.0) / S;
+                objects[i]->total_fs += 0;
+                objects[i]->number_fs++;
+                objects[i]->number_fs--;
+                odd = objects[i]->total_fs / objects[i]->number_fs + FSLGetL() * MIN_FSL_L_FACTOR;
+                objects[i]->fsl += 0;
+                scores[i] = objects[i]->fsl;
+            }
+          }
+      }
 
       // naive grouping
     //   int even = (c->argc-1)/2 + 1;
