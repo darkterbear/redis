@@ -180,7 +180,8 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
              * frequency subtracting the actual frequency to the maximum
              * frequency of 255. */
             
-            if (server.maxmemory_policy == MAXMEMORY_MIN_FSL || server.maxmemory_policy == MAXMEMORY_AVG_FSL || server.maxmemory_policy == MAXMEMORY_GDSF) {
+            if (server.maxmemory_policy == MAXMEMORY_MIN_FSL || server.maxmemory_policy == MAXMEMORY_AVG_FSL || server.maxmemory_policy == MAXMEMORY_GDSF
+			    || server.maxmemory_policy == MAXMEMORY_LIFE) {
                 // Don't include this object if it doesn't have a score yet                
                 if (o->fsl == FSLInitialScore()) {
                     // serverLog(LL_NOTICE, "[TXN_PROJ] Filling eviction pool; no score, skipped");
@@ -270,6 +271,7 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
  * MIN-FSL Score = min(F) / S + L
  * AVG-FSL Score = cumulative(min(F) / S) / num_requests + L
  * GDSF Score = F / S + L
+ * LIFE Score = 1 / (S + 1)
  * 
  * - F is the frequency of a key, stored in robj->lru. This is why we include 
  *   LFU flag in our max-memory policy. min(F) is the minimum F of any key in 
@@ -700,7 +702,8 @@ int performEvictions(void) {
                 }
             }
 
-            if ((server.maxmemory_policy == MAXMEMORY_MIN_FSL || server.maxmemory_policy == MAXMEMORY_AVG_FSL || server.maxmemory_policy == MAXMEMORY_GDSF) && bestkey) {
+            if ((server.maxmemory_policy == MAXMEMORY_MIN_FSL || server.maxmemory_policy == MAXMEMORY_AVG_FSL 
+				    || server.maxmemory_policy == MAXMEMORY_GDSF || server.maxmemory_policy == MAXMEMORY_LIFE) && bestkey) {
                 // Find the highest score of the values that we are evicting
                 redisDb* db = server.db+bestdbid;
                 dictEntry *de = dictFind(db->dict, bestkey);

@@ -63,6 +63,7 @@ configEnum maxmemory_policy_enum[] = {
     {"min-fsl", MAXMEMORY_MIN_FSL},
     {"avg-fsl", MAXMEMORY_AVG_FSL},
     {"gdsf", MAXMEMORY_GDSF},
+    {"life", MAXMEMORY_LIFE},
     {NULL, 0}
 };
 

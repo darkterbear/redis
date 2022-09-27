@@ -223,7 +223,8 @@ void dbOverwrite(redisDb *db, robj *key, robj *val) {
         val->lru = old->lru;
     }
 
-    if (server.maxmemory_policy == MAXMEMORY_MIN_FSL || server.maxmemory_policy == MAXMEMORY_GDSF) {
+    if (server.maxmemory_policy == MAXMEMORY_MIN_FSL || server.maxmemory_policy == MAXMEMORY_GDSF 
+		    || server.maxmemory_policy == MAXMEMORY_LIFE) {
         // serverLog(LL_NOTICE, "[TXN_PROJ] Key %s overwritten, fs copied", key->ptr);
         val->fsl = old->fsl;
         val->number_fs = old->number_fs;

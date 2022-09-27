@@ -601,7 +601,14 @@ void mgetCommand(client *c) {
             objects[i]->fsl = objects[i]->total_fs / objects[i]->number_fs + FSLGetL() * MIN_FSL_L_FACTOR;
           }
       }
+    } else if (server.maxmemory_policy == MAXMEMORY_LIFE) {
+      for (int i = 0; i < c->argc-1; i++) {
+         if (objects[i] != NULL) {
+	    objects[i]->fsl = 1.0 / (S + 1);
+	 }
+      }
     }
+
 }
 
 void msetGenericCommand(client *c, int nx) {
